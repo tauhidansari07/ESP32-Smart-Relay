@@ -1,0 +1,57 @@
+esphome:
+  name: esp32-smart-relay
+  friendly_name: ESP32 Smart Relay
+
+# Define the specific microcontroller architecture
+esp32:
+  board: esp32-c3-devkitm-1
+  variant: esp32c3
+
+# Enable serial logging for debugging over the UART header
+logger:
+
+# Enable native Home Assistant API for instant local control
+api:
+
+# Enable Over-The-Air updates so you don't need the UART header after the first flash
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: "YOUR_WIFI_SSID"
+  password: "YOUR_WIFI_PASSWORD"
+
+  # Fallback hotspot if your router goes down
+  ap:
+    ssid: "Relay Fallback"
+    password: "setup_password"
+
+captive_portal:
+
+# --- HARDWARE DEFINITIONS ---
+
+# 1. The Relay (Output)
+switch:
+  - platform: gpio
+    pin: 4
+    name: "Main Appliance Power"
+    id: relay_1
+    icon: "mdi:power-socket-eu"
+    restore_mode: RESTORE_DEFAULT_OFF # Ensures it stays off after a power outage
+
+# 2. The Physical Button (Input)
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: 9
+      # Utilizes the hardware pull-up we designed into the schematic
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "Manual Override Button"
+    # Hardware debounce to prevent ghost clicks
+    filters:
+      - delayed_on: 10ms
+    # When you press the physical button, toggle the relay locally
+    on_press:
+      then:
+        - switch.toggle: relay_1
